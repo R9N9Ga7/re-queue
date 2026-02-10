@@ -39,6 +39,7 @@ impl Storage {
 
         let mut meta = self.meta_store.get()?;
         meta.write_pointer += self.data_store.push(&record)?;
+        meta.total_records_added += 1;
         self.meta_store.update(meta)?;
 
         Ok(())
