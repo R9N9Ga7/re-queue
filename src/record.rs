@@ -6,9 +6,9 @@ pub struct Record {
 }
 
 impl Record {
-    pub fn new(data: String) -> Self {
+    pub fn new(data: String, id: u64) -> Self {
         Self {
-            meta: RecordHeader::new(data.len() as u64),
+            meta: RecordHeader::new(data.len() as u64, id),
             data,
         }
     }

@@ -35,11 +35,12 @@ impl Storage {
     }
 
     pub fn save(&mut self, value: String) -> Result<(), StorageError> {
-        let record = Record::new(value);
-
         let mut meta = self.meta_store.get()?;
+        let total_records_added = meta.total_records_added + 1;
+        let record = Record::new(value, total_records_added);
+
         meta.write_pointer += self.data_store.push(&record)?;
-        meta.total_records_added += 1;
+        meta.total_records_added = total_records_added;
         self.meta_store.update(meta)?;
 
         Ok(())

@@ -74,7 +74,7 @@ impl App {
                             let records = self.storage.get_all().unwrap();
                             println!("*******");
                             for record in records {
-                                println!("{}", record.data);
+                                println!("({}): {}", record.meta.get_id(), record.data);
                             }
                             println!("*******");
                         }
