@@ -9,6 +9,7 @@ enum Command {
     MoveNext,
     Exit,
     Help,
+    ShowAll,
 }
 
 impl Command {
@@ -19,6 +20,7 @@ impl Command {
             "next" => Some(Command::MoveNext),
             "exit" => Some(Command::Exit),
             "help" => Some(Command::Help),
+            "all" => Some(Command::ShowAll),
             _ => None,
         }
     }
@@ -55,7 +57,7 @@ impl App {
                     match Command::parse(&line) {
                         Some(Command::Exit) => break,
                         Some(Command::Help) => {
-                            println!("Available commands: save, pick, next, exit, help");
+                            println!("Available commands: save, pick, next, exit, help, all");
                         }
                         Some(Command::Pick) => {
                             let value = self.storage.pick().unwrap();
@@ -67,6 +69,14 @@ impl App {
                         }
                         Some(Command::Save) => {
                             mode = Mode::AwaitValue(Command::Save);
+                        }
+                        Some(Command::ShowAll) => {
+                            let records = self.storage.get_all().unwrap();
+                            println!("*******");
+                            for record in records {
+                                println!("{}", record.data);
+                            }
+                            println!("*******");
                         }
                         None => {
                             println!("Unknown command: {line}");

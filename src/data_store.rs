@@ -42,4 +42,22 @@ impl DataStore {
 
         Ok(Record::from_bytes(record_header, &data_buffer))
     }
+
+    pub fn get_all(&mut self) -> std::io::Result<Vec<Record>> {
+        let mut result = Vec::<Record>::new();
+        let mut pointer = 0u64;
+
+        loop {
+            match self.pick(pointer) {
+                Ok(record) => {
+                    pointer += record.size();
+                    result.push(record);
+                },
+                // TODO: add correct error handling
+                Err(_) => break,
+            }
+        }
+
+        Ok(result)
+    }
 }

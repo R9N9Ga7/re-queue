@@ -73,6 +73,10 @@ impl Storage {
         Ok(())
     }
 
+    pub fn get_all(&mut self) -> Result<Vec<Record>, StorageError> {
+        Ok(self.data_store.get_all()?)
+    }
+
     pub fn file_path(dir_path: &str, file_path: &str) -> std::path::PathBuf {
         let base = Path::new(dir_path);
         base.join(file_path)
