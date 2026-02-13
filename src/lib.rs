@@ -4,3 +4,6 @@ pub mod storage;
 pub mod record;
 pub mod data_store;
 pub mod meta_store;
+pub mod storage_manager;
+pub mod config;
+pub mod config_store;

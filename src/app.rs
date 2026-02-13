@@ -1,6 +1,6 @@
 use std::io::{self, Write};
 
-use re_queue::storage::Storage;
+use re_queue::storage_manager::StorageManager;
 
 #[derive(Debug, PartialEq, Clone, Copy)]
 enum Command {
@@ -10,6 +10,9 @@ enum Command {
     Exit,
     Help,
     List,
+    CreateStorage,
+    OpenStorage,
+    StorageList,
 }
 
 impl Command {
@@ -21,6 +24,9 @@ impl Command {
             "exit" => Some(Command::Exit),
             "help" => Some(Command::Help),
             "list" => Some(Command::List),
+            "create-storage" => Some(Command::CreateStorage),
+            "open-storage" => Some(Command::OpenStorage),
+            "storage-list" => Some(Command::StorageList),
             _ => None,
         }
     }
@@ -32,13 +38,13 @@ enum Mode {
 }
 
 pub struct App {
-    storage: Storage,
+    storage_manager: StorageManager
 }
 
 impl App {
     pub fn new() -> Self {
         Self {
-            storage: Storage::new("storage", "meta", "data").unwrap(),
+            storage_manager: StorageManager::new(),
         }
     }
 
@@ -46,9 +52,17 @@ impl App {
         println!("=======");
 
         let mut mode = Mode::AwaitCommand;
+
+        if !self.storage_manager.has_storages() {
+            println!("You don't have any storages, please create one.");
+            mode = Mode::AwaitValue(Command::CreateStorage);
+        }
+
         loop {
             match mode {
                 Mode::AwaitCommand => {
+                    println!("");
+                    println!("Current storage: {}", self.storage_manager.get_active_storage_name());
                     print!("Write command (help to list): ");
                     io::stdout().flush().unwrap();
 
@@ -57,24 +71,38 @@ impl App {
                     match Command::parse(&line) {
                         Some(Command::Exit) => break,
                         Some(Command::Help) => {
-                            println!("Available commands: save, pick, next, exit, help, list");
+                            println!("Available commands: save, pick, next, exit, help, list, create-storage, open-storage, storage-list");
                         }
                         Some(Command::Pick) => {
-                            let value = self.storage.pick().unwrap();
+                            let value = self.storage_manager.get_active_storage().pick().unwrap();
                             println!("{value}");
                         }
                         Some(Command::MoveNext) => {
-                            self.storage.move_next().unwrap();
+                            self.storage_manager.get_active_storage().move_next().unwrap();
                             println!("<next>");
                         }
                         Some(Command::Save) => {
                             mode = Mode::AwaitValue(Command::Save);
                         }
                         Some(Command::List) => {
-                            let records = self.storage.get_all().unwrap();
+                            let records = self.storage_manager.get_active_storage().get_all().unwrap();
                             println!("*******");
                             for record in records {
                                 println!("({}): {}", record.meta.get_id(), record.data);
+                            }
+                            println!("*******");
+                        }
+                        Some(Command::CreateStorage) => {
+                            mode = Mode::AwaitValue(Command::CreateStorage);
+                        }
+                        Some(Command::OpenStorage) => {
+                            mode = Mode::AwaitValue(Command::OpenStorage);
+                        }
+                        Some(Command::StorageList) => {
+                            let list = self.storage_manager.get_list();
+                            println!("*******");
+                            for storage_name in list {
+                                println!("{storage_name}");
                             }
                             println!("*******");
                         }
@@ -88,9 +116,32 @@ impl App {
                     io::stdout().flush().unwrap();
 
                     let value = Self::read_line_trimmed_end().unwrap();
-                    self.storage.save(value).unwrap();
+                    self.storage_manager.get_active_storage().save(value).unwrap();
 
                     println!("<save>");
+
+                    mode = Mode::AwaitCommand;
+                }
+                Mode::AwaitValue(Command::CreateStorage) => {
+                    print!("Write storage name: ");
+                    io::stdout().flush().unwrap();
+
+                    let value = Self::read_line_trimmed_end().unwrap();
+                    self.storage_manager.create(&value);
+                    self.storage_manager.open(&value);
+
+                    println!("<create-storage>");
+
+                    mode = Mode::AwaitCommand;
+                }
+                Mode::AwaitValue(Command::OpenStorage) => {
+                    print!("Write storage name: ");
+                    io::stdout().flush().unwrap();
+
+                    let value = Self::read_line_trimmed_end().unwrap();
+                    self.storage_manager.open(&value);
+
+                    println!("<open-storage>");
 
                     mode = Mode::AwaitCommand;
                 }
